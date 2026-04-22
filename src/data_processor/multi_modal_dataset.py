@@ -1,6 +1,6 @@
-from typing import Any, Callable, Tuple
-
+import albumentations as A
 import numpy as np
+import torch
 from torch import Tensor
 from torch.utils.data import Dataset, Subset
 from transformers import AutoTokenizer
@@ -11,8 +11,8 @@ class MultiModalDataset(Dataset):
         self, 
         subset: Subset,
         tokenizer: AutoTokenizer = None,
-        image_augmentations: Callable[[Any], Any] | None = None,
-        max_length: int = 512
+        image_transformations: A.Compose | None = None,
+        max_seq_length: int = 512
     ) -> None:
         """
         A wrapper to apply transforms to a specific subset of data.
@@ -21,11 +21,11 @@ class MultiModalDataset(Dataset):
         :type subset: Subset
         :param tokenizer: Tokenizer to tokenize the texts
         :type tokenizer: AutoTokenizer
-        :param image_augmentations: Image Augmentations that need to be applied; Defaults to None.
-        :type image_augmentations: Callable[[Any], Any] | None
-        :param max_length: Maximum Token Length to ensure all sequences are of same size;
+        :param image_transformations: Image Augmentations that need to be applied; Defaults to None.
+        :type image_transformations: A.Compose | None
+        :param max_seq_length: Maximum Token Length to ensure all sequences are of same size;
             Default to 512.
-        :type max_length: int
+        :type max_seq_length: int
 
         :return: None
         :rtype: None
@@ -34,11 +34,11 @@ class MultiModalDataset(Dataset):
         #   not add any augmentations, but for Tokenization, we would be performing that
         #   irrespective of the split.
         self.subset: Subset = subset
-        self.image_augmentations: Callable[[Any], Any] | None = image_augmentations
+        self.image_transformations: A.Compose | None = image_transformations
         self.tokenizer: AutoTokenizer = tokenizer
-        self.max_length: int = max_length
+        self.max_seq_length: int = max_seq_length
         
-    def __getitem__(self, index: int) -> Tuple[Tensor, dict[str, Tensor], int]:
+    def __getitem__(self, index: int) -> tuple[Tensor, dict[str, Tensor], Tensor]:
         """
         Retrieves an element from the dataset.
 
@@ -49,24 +49,26 @@ class MultiModalDataset(Dataset):
         """
         image, text, label = self.subset[index]
         # Applies Augmentations if Any
-        if self.image_augmentations:
+        if self.image_transformations:
             # Albumentations only take in Numpy.
             image_np = np.array(image.convert('RGB'))
             # Albumentations return a dictionary, with keywords, bbox etc,
             #   but we are only interested in the transformed image.
-            image = self.image_augmentations(image_np)['image']
+            image = self.image_transformations(image=image_np)['image']
         
         # Tokenizes the Text.
         encoded_text = self.tokenizer(
             text,
             padding='max_length',
             truncation=True,
-            max_length=self.max_length,
+            max_length=self.max_seq_length,
             return_tensors='pt'
         )
         # Squeeze to remove the extra batch dimension added by return_tensors
         encoded_text['input_ids'] = encoded_text['input_ids'].squeeze(0)
         encoded_text['attention_mask'] = encoded_text['attention_mask'].squeeze(0)
+
+        label = torch.tensor(label, dtype=torch.long)
         return image, encoded_text, label
         
     def __len__(self) -> int:
