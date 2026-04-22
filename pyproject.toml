@@ -1,7 +1,35 @@
 [project]
 name = "multi-modal-document-classifier"
 version = "0.1.0"
-description = "Add your description here"
+description = "This repository explores Late-Fusion Multimodal Architectures for document image classification, utilizing both visual layout and semantic text features to improve accuracy on noisy, complex documents."
 readme = "README.md"
-requires-python = ">=3.12"
-dependencies = []
+requires-python = ">=3.12, <3.13"
+dependencies = [
+    "albumentations>=2.0.8",
+    "datasets>=4.5.0",
+    "lightning>=2.6.0",
+    "matplotlib>=3.10.8",
+    "mlflow>=3.9.0",
+    "nvidia-ml-py>=13.590.48",
+    "pillow>=12.2.0",
+    "psutil>=7.2.2",
+    "seaborn>=0.13.2",
+    "torch>=2.4.0", # Downgrade slightly to a stable LTS version
+    "torchmetrics>=1.8.2",
+    "torchvision>=0.19.0",
+]
+
+[[tool.uv.index]]
+# Switch to cu121 or cu118 for better legacy support
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu121", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+torchvision = [
+  { index = "pytorch-cu121", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+
