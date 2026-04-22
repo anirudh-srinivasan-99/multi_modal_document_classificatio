@@ -1,12 +1,11 @@
 import albumentations as A
 import datasets
 import lightning as L
-import torch
-from torch.utils.data import DataLoader, Dataset, random_split
-from torchvision import datasets, transforms
+from torch.utils.data import DataLoader, Dataset
 from transformers import AutoTokenizer
 
 from src.data_processor.multi_modal_dataset import MultiModalDataset
+
 
 class MultiModalDataLoader(L.LightningDataModule):
     def __init__(
