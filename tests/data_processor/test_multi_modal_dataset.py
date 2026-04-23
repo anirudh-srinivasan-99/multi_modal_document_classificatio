@@ -21,13 +21,13 @@ def tokenizer() -> PreTrainedTokenizer:
 
 
 @pytest.fixture
-def mock_subset() -> list[tuple[Image.Image, str, int]]:
+def mock_subset() -> list[dict[str, Image.Image | str | int]]:
     """
     Creates a mock list of tuples simulating the 'raw' data format.
     Ensures we aren't reliant on external Hugging Face downloads for unit tests.
 
     :return: Returns the Raw Data as a List of Image, Text and Label.
-    :rtype: list[tuple[Image.Image, str, int]]
+    :rtype: list[dict[str, Image.Image | str | int]]
     """
     # Creates Random Pixel Value in range 0-255, with random dimensions 50x50x3
     images = [
@@ -35,10 +35,19 @@ def mock_subset() -> list[tuple[Image.Image, str, int]]:
         for _ in range(3)
     ]
     # Random Texts
-    texts = ["Sample invoice text", "Receipt from grocery", "Shipping manifest"]
+    texts = ['Sample invoice text', 'Receipt from grocery', 'Shipping manifest']
     # Labels
-    labels = [0, 1, 2]
-    return list(zip(images, texts, labels))
+    label_ids = [0, 1, 3]
+    subset = []
+    for image, text, label_id in zip(images, texts, label_ids):
+        subset.append(
+            {
+                'image': image,
+                'text': text,
+                'label_id': label_id
+            }
+        )
+    return subset
 
 
 @pytest.fixture
@@ -60,7 +69,7 @@ def transformations() -> A.Compose:
 def multimodal_dataset(
     mock_subset: list[tuple[Image.Image, str, int]], 
     tokenizer: PreTrainedTokenizer, 
-    transformations: A.Compose
+    transformations: A.Compose,
 ) -> MultiModalDataset:
     """
     The main Dataset instance under test. 
@@ -95,7 +104,7 @@ def test_dataset_length(multimodal_dataset: MultiModalDataset) -> None:
     :return: None
     :rtype: None
     """
-    # Expect 3 here as we have initialzied with a subset of size 3.
+    # Expect 3 here as we have initialized with a subset of size 3.
     assert len(multimodal_dataset) == 3
 
 
