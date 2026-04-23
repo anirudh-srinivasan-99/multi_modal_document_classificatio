@@ -14,9 +14,10 @@ folders=(
     "models/checkpoint"
     "mlruns"
     "logs"
+    "dev_scripts"
 )
 
-echo "📁 Creating directory tree..."
+echo "Creating directory tree..."
 for dir in "${folders[@]}"; do
     mkdir -p "$dir"
     echo "Created: $dir"
