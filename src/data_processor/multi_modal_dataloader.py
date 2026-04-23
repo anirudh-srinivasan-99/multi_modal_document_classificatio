@@ -38,6 +38,9 @@ class MultiModalDataLoader(L.LightningDataModule):
         :type dataset_mean: tuple[float, float, float]
         :param dataset_std: Standard deviation RGB values (0-1 scale) across all training images.
         :type dataset_std: tuple[float, float, float]
+
+        :return: None
+        :rtype: None
         """
         super().__init__()
         self.__hf_repo_id: str = hf_repo_id
@@ -65,6 +68,8 @@ class MultiModalDataLoader(L.LightningDataModule):
         :return: None
         :rtype: None
         """
+        # Load just the metadata/features without downloading the actual images.
+        # This is very fast.
         datasets.load_dataset(self.__hf_repo_id)
 
     def setup(self, stage: str) -> None:
@@ -79,15 +84,16 @@ class MultiModalDataLoader(L.LightningDataModule):
         :rtype: None
         """
         # Train Data Transformations to add some Noise to the Documents.
+        h, w = self.image_size
         train_transform = A.Compose([
             # Geometric Transformations
             A.HorizontalFlip(p=0.25),
             A.Affine(rotate=(-2, 2), shear=(-2, 2), p=0.25),
-            A.Resize(self.image_size),
+            A.Resize(height=h, width=w),
 
             # Pixel Transformations
             A.SaltAndPepper(p=0.25),
-            A.Blur(blur_limit=(1, 3), p=0.25),
+            A.Blur(blur_limit=(3, 5), p=0.25),
             A.Normalize(
                 mean=self.dataset_mean,
                 std=self.dataset_std
@@ -97,7 +103,7 @@ class MultiModalDataLoader(L.LightningDataModule):
         # We do not add much transformations for Validation and Test Data.
         #   Mostly it is Resizing, Normalization and converting to PyTorch Vectors.
         val_transform = A.Compose([
-            A.Resize(self.image_size),
+            A.Resize(height=h, width=w),
             A.Normalize(
                 mean=self.dataset_mean,
                 std=self.dataset_std
@@ -105,7 +111,7 @@ class MultiModalDataLoader(L.LightningDataModule):
             A.ToTensorV2()
         ])
         test_transform = A.Compose([
-            A.Resize(self.image_size),
+            A.Resize(height=h, width=w),
             A.Normalize(
                 mean=self.dataset_mean,
                 std=self.dataset_std
@@ -122,14 +128,14 @@ class MultiModalDataLoader(L.LightningDataModule):
                     subset=train_base,
                     tokenizer=self.tokenizer,
                     image_transformations=train_transform,
-                    max_length=self.max_seq_length
+                    max_seq_length=self.max_seq_length,
                 )
-                val_base = datasets.load_dataset(self.__hf_repo_id, split='valid')
+                val_base = datasets.load_dataset(self.__hf_repo_id, split='validation')
                 self.val_data = MultiModalDataset(
                     subset=val_base,
                     tokenizer=self.tokenizer,
                     image_transformations=val_transform,
-                    max_length=self.max_seq_length
+                    max_seq_length=self.max_seq_length,
                 )
             case 'test':
                 test_base = datasets.load_dataset(self.__hf_repo_id, split='test')
@@ -137,7 +143,7 @@ class MultiModalDataLoader(L.LightningDataModule):
                     subset=test_base,
                     tokenizer=self.tokenizer,
                     image_transformations=test_transform,
-                    max_length=self.max_seq_length
+                    max_seq_length=self.max_seq_length,
                 )
 
 

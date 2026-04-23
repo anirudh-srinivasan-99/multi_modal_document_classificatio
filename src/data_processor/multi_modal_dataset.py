@@ -12,7 +12,7 @@ class MultiModalDataset(Dataset):
         subset: Subset,
         tokenizer: AutoTokenizer = None,
         image_transformations: A.Compose | None = None,
-        max_seq_length: int = 512
+        max_seq_length: int = 512,
     ) -> None:
         """
         A wrapper to apply transforms to a specific subset of data.
@@ -34,8 +34,8 @@ class MultiModalDataset(Dataset):
         #   not add any augmentations, but for Tokenization, we would be performing that
         #   irrespective of the split.
         self.subset: Subset = subset
-        self.image_transformations: A.Compose | None = image_transformations
         self.tokenizer: AutoTokenizer = tokenizer
+        self.image_transformations: A.Compose | None = image_transformations
         self.max_seq_length: int = max_seq_length
         
     def __getitem__(self, index: int) -> tuple[Tensor, dict[str, Tensor], Tensor]:
@@ -47,7 +47,10 @@ class MultiModalDataset(Dataset):
         :return: Returns Image, Text and the corresponding Document Category.
         :rtype: Tuple[Tensor, dict[str, Tensor], int]
         """
-        image, text, label = self.subset[index]
+        print(f'Subset: {self.subset[index]}')
+        image = self.subset[index]['image']
+        text = self.subset[index]['text']
+        label = self.subset[index]['label_id']
         # Applies Augmentations if Any
         if self.image_transformations:
             # Albumentations only take in Numpy.
