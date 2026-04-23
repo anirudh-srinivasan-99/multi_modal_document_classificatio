@@ -3,6 +3,7 @@ from typing import NamedTuple
 
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 
