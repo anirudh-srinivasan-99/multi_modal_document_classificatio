@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from torch import Tensor
 from torch.utils.data import Dataset, Subset
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, BatchEncoding
 
 
 class MultiModalDataset(Dataset):
@@ -38,16 +38,15 @@ class MultiModalDataset(Dataset):
         self.image_transformations: A.Compose | None = image_transformations
         self.max_seq_length: int = max_seq_length
         
-    def __getitem__(self, index: int) -> tuple[Tensor, dict[str, Tensor], Tensor]:
+    def __getitem__(self, index: int) -> tuple[Tensor, BatchEncoding, Tensor]:
         """
         Retrieves an element from the dataset.
 
         :param index: Index to be retrieved.
         :type index: int
         :return: Returns Image, Text and the corresponding Document Category.
-        :rtype: Tuple[Tensor, dict[str, Tensor], int]
+        :rtype: Tuple[Tensor, BatchEncoding, int]
         """
-        print(f'Subset: {self.subset[index]}')
         image = self.subset[index]['image']
         text = self.subset[index]['text']
         label = self.subset[index]['label_id']
