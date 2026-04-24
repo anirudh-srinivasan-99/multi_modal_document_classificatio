@@ -1,16 +1,28 @@
 import pytest
 import torch
 
-from src.model_builder.projection_head import ProjectHead
+from src.model_builder.projection_head import ProjectionHead
 
 
 @pytest.fixture
 def batch_size() -> int:
+    """
+    Provides a standard batch size for testing.
+
+    :return: The number of samples in a batch.
+    :rtype: int
+    """
     return 16
 
 
 @pytest.fixture
 def feature_dimension() -> int:
+    """
+    Provides the mock output dimension of a vision backbone.
+
+    :return: The number of input features.
+    :rtype: int
+    """
     return 2186
 
 
@@ -19,11 +31,28 @@ def input_tensor(
     batch_size: int,
     feature_dimension: int
 ) -> torch.Tensor:
+    """
+    Generates a random input tensor simulating backbone features.
+
+    :param batch_size: The number of samples (from fixture).
+    :type batch_size: int
+    :param feature_dimension: The feature size (from fixture).
+    :type feature_dimension: int
+
+    :return: A tensor of shape (batch_size, feature_dimension).
+    :rtype: torch.Tensor
+    """
     return torch.randn(batch_size, feature_dimension)
 
 
 @pytest.fixture
 def projection_dimension() -> int:
+    """
+    Provides the target output dimension for the projection head.
+
+    :return: The size of the projected latent space.
+    :rtype: int
+    """
     return 512
 
 
@@ -31,8 +60,19 @@ def projection_dimension() -> int:
 def projection_head(
     feature_dimension: int,
     projection_dimension: int
-) -> ProjectHead:
-    return ProjectHead(
+) -> ProjectionHead:
+    """
+    Initializes a ProjectionHead instance for testing.
+
+    :param feature_dimension: The input feature size (from fixture).
+    :type feature_dimension: int
+    :param projection_dimension: The output feature size (from fixture).
+    :type projection_dimension: int
+
+    :return: An instance of the ProjectionHead module.
+    :rtype: ProjectionHead
+    """
+    return ProjectionHead(
         input_dimensions=feature_dimension,
         output_dimensions=projection_dimension
     )
@@ -42,7 +82,7 @@ def test_projection_head(
     batch_size: int,
     input_tensor: int,
     projection_dimension: int,
-    projection_head: ProjectHead
+    projection_head: ProjectionHead
 ):
     """
     Verifies the functional integrity of the ProjectHead adapter.
