@@ -45,7 +45,7 @@ class MultiModalDataset(Dataset):
         :param index: Index to be retrieved.
         :type index: int
         :return: Returns Image, Text and the corresponding Document Category.
-        :rtype: Tuple[Tensor, BatchEncoding, int]
+        :rtype: Tuple[Tensor, BatchEncoding, Tensor]
         """
         image = self.subset[index]['image']
         text = self.subset[index]['text']
