@@ -11,7 +11,8 @@ class ProjectHead(nn.Module):
         self.projection = nn.Sequential(
             nn.Linear(
                 in_features=input_dimensions,
-                out_features=output_dimensions
+                out_features=output_dimensions,
+                bias=False
             ),
             nn.BatchNorm1d(output_dimensions),
             nn.ReLU(),
