@@ -5,10 +5,6 @@ from src.config.constants import ModelName
 from src.model_builder.vision_feature_extractor import VisionFeatureExtractor
 
 
-import pytest
-import torch
-from src.model_builder.vision_feature_extractor import VisionFeatureExtractor
-
 @pytest.fixture
 def model_name() -> str:
     """
