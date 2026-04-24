@@ -36,8 +36,12 @@ The model follows a two-stream "Late Fusion" strategy:
 
 ## Getting Started
 
-Install Dependencies:
+To setup the project run `scripts/project_setup.sh`.
+This essentially creates empty untracked directories as well as setup the python environment.
+
+From the project root, run the following commands using a linux bash [in windows, MYSY or git Bash should do the trick].
 
 ```shell
-uv sync
+chmod +x scripts/project_setup.sh
+bash scripts/project_setup.sh
 ```
