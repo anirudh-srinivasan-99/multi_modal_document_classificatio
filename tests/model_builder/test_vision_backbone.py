@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from src.config.constants import ModelName
-from src.model_builder.vision_backbone import VisionBackbone
+from src.model_builder.vision_feature_extractor import VisionFeatureExtractor
 
 
 @pytest.fixture
@@ -20,12 +20,12 @@ def is_trainable() -> bool:
     return False
 
 @pytest.fixture
-def vision_backbone(
+def vision_fe(
     model_name: str,
     projection_dimension: int,
     is_trainable: bool
-) -> VisionBackbone:
-    return VisionBackbone(
+) -> VisionFeatureExtractor:
+    return VisionFeatureExtractor(
         backbone_model_name=model_name,
         projection_dimension=projection_dimension,
         backbone_trainable=is_trainable
@@ -38,15 +38,15 @@ def batch_size() -> int:
 @pytest.fixture
 def input_tensor(
     batch_size: int,
-    vision_backbone: VisionBackbone
+    vision_fe: VisionFeatureExtractor
 ) -> torch.Tensor:
-    h, w = vision_backbone.input_size
+    h, w = vision_fe.input_size
     return torch.randn(batch_size, 3, h, w)
 
 
 def test_vision_backbone_freezing(
     is_trainable: int,
-    vision_backbone: VisionBackbone,
+    vision_fe: VisionFeatureExtractor,
 ):
     """
     Verifies that the backbone freezing logic correctly toggles parameter updates.
@@ -59,27 +59,27 @@ def test_vision_backbone_freezing(
 
     :param is_trainable: The expected gradient status for the backbone.
     :type is_trainable: bool
-    :param vision_backbone: The initialized model wrapper under test.
-    :type vision_backbone: VisionBackbone
+    :param vision_fe: The initialized model wrapper under test.
+    :type vision_fe: VisionFeatureExtractor
     """
     
     # 1. Verify Backbone is frozen
-    for name, param in vision_backbone.backbone.named_parameters():
+    for name, param in vision_fe.backbone.named_parameters():
         assert param.requires_grad is is_trainable, f"Backbone parameter {name} should be frozen!"
 
     # 2. Verify Projector is still trainable (active)
-    for name, param in vision_backbone.projection_head.named_parameters():
+    for name, param in vision_fe.projection_head.named_parameters():
         assert param.requires_grad is True, f"Projection head parameter {name} must stay trainable!"
 
 
-def test_vision_backbone_forward_pass(
+def test_vision_fe_forward_pass(
     batch_size: int,
     projection_dimension: int,
     input_tensor: torch.Tensor,
-    vision_backbone: VisionBackbone # Assuming our wrapped class
-):
+    vision_fe: VisionFeatureExtractor
+) -> None:
     """
-    Verifies that the full VisionBackbone can process a batch of images.
+    Verifies that the full VisionFeatureExtractor can process a batch of images.
 
     Check: Whether a dummy image tensor can pass through the backbone and projector.
     Why: It ensures that the output dimension of the timm 
@@ -95,10 +95,10 @@ def test_vision_backbone_forward_pass(
     :type input_tensor: int
     :param projection_dimension: Projection Dimension
     :type projection_dimension: int
-    :param vision_backbone: The initialized VisionBackbone.
-    :type vision_backbone: VisionBackbone
+    :param vision_fe: The initialized VisionFeatureExtractor.
+    :type vision_fe: VisionFeatureExtractor
     """
-    projection = vision_backbone(input_tensor)
+    vision_features = vision_fe(input_tensor)
     
-    assert projection.shape == (batch_size, projection_dimension), f'Output Shape: {projection.shape} | Expected Shape: {(batch_size, projection_dimension)}'
-    assert projection.requires_grad is True
+    assert vision_features.shape == (batch_size, projection_dimension), f'Output Shape: {vision_features.shape} | Expected Shape: {(batch_size, projection_dimension)}'
+    assert vision_features.requires_grad is True
