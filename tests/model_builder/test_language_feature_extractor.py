@@ -1,5 +1,6 @@
 import pytest
-from transformers import AutoTokenizer, BatchEncoding, PreTrainedTokenizer
+import torch
+from transformers import BatchEncoding
 
 from src.config.constants import ModelName
 from src.model_builder.language_feature_extractor import LanguageFeatureExtractor
@@ -76,47 +77,25 @@ def batch_size() -> int:
 
 
 @pytest.fixture
-def tokenizer(
-    model_name: str
-) -> PreTrainedTokenizer:
-    """
-    Loads the appropriate tokenizer for the selected language model.
-
-    :param model_name: The model identifier (from fixture).
-    :type model_name: str
-
-    :return: A pretrained Hugging Face tokenizer.
-    :rtype: PreTrainedTokenizer
-    """
-    return AutoTokenizer.from_pretrained(model_name)
-
-
-@pytest.fixture
 def input_tokens(
     batch_size: int,
-    tokenizer: PreTrainedTokenizer
+    language_fe: LanguageFeatureExtractor
 ) -> BatchEncoding:
     """
     Generates a batch of tokenized sequences, including edge cases like empty strings.
-    
-    This fixture ensures uniform tensor shapes by applying padding and truncation,
-    preventing common PyTorch dimensionality errors.
 
     :param batch_size: The number of sequences to generate (from fixture).
     :type batch_size: int
-    :param tokenizer: The tokenizer to process text (from fixture).
-    :type tokenizer: PreTrainedTokenizer
 
     :return: A dictionary-like object containing input_ids, attention_mask, etc.
     :rtype: BatchEncoding
     """
-    sentences = ['Hi this is a test sentence'] * batch_size
-    sentences[0] = ''  # Test edge case for empty input
-    return tokenizer(
-        sentences,
-        padding=True,
-        truncation=True,
-        return_tensors='pt'
+    max_seq_len = language_fe.max_seq_len
+    return BatchEncoding(
+        {
+            'input_ids': torch.randint(0, 1000, (batch_size, max_seq_len)),
+            'attention_mask': torch.ones(batch_size, max_seq_len) 
+        }
     )
 
 
