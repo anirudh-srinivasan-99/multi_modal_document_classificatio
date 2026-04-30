@@ -1,5 +1,6 @@
 import os
-from typing import NamedTuple
+from enum import Enum
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -7,11 +8,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-class HFConfig(NamedTuple):
-    HF_TOKEN: str
-    HF_REPO_ID: str
+class HFConfig:
+    HF_TOKEN: str = os.getenv('HF_TOKEN')
+    HF_REPO_ID: str = os.getenv('HF_REPO_ID')
 
-HF_CONFIG = HFConfig(
-    HF_TOKEN=os.getenv('HF_TOKEN'),
-    HF_REPO_ID=os.getenv('HF_REPO_ID')
-)
+class DefaultPaths:
+    BASE_PATH: Path = Path(os.getenv('BASE_PATH'))
+    HF_CACHE_DIR: Path = BASE_PATH / 'data' / '.cache' / 'huggingface'
+    MODEL_CHECKPOINT_DIR: Path = BASE_PATH / 'models' / 'checkpoints' / 'multimodal_model'
+    MLFLOW_DIR: Path = BASE_PATH / 'mlruns'

@@ -3,7 +3,7 @@ import torch
 from transformers import AutoTokenizer, PreTrainedTokenizer
 
 from src.data_processor.multi_modal_dataloader import MultiModalDataLoader
-from src.config.env_loader import HF_CONFIG
+from src.config.env_loader import HFConfig
 
 
 @pytest.fixture(scope="session")
@@ -30,7 +30,7 @@ def datamodule(tokenizer: PreTrainedTokenizer) -> MultiModalDataLoader:
     :rtype: MultiModalDataLoader
     """
     return MultiModalDataLoader(
-        hf_repo_id=HF_CONFIG.HF_REPO_ID,
+        hf_repo_id=HFConfig.HF_REPO_ID,
         batch_size=4,
         image_size=(224, 224),
         max_seq_length=128,

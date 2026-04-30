@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader, Dataset
 from transformers import AutoTokenizer
 
 from src.data_processor.multi_modal_dataset import MultiModalDataset
+from src.config.env_loader import DefaultPaths as DP
 
 
 class MultiModalDataLoader(L.LightningDataModule):
@@ -70,7 +71,7 @@ class MultiModalDataLoader(L.LightningDataModule):
         """
         # Load just the metadata/features without downloading the actual images.
         # This is very fast.
-        datasets.load_dataset(self.__hf_repo_id)
+        datasets.load_dataset(self.__hf_repo_id, cache_dir=DP.HF_CACHE_DIR)
 
     def setup(self, stage: str) -> None:
         """
@@ -123,14 +124,14 @@ class MultiModalDataLoader(L.LightningDataModule):
         match stage:
             # Lightning requires both Train and Val data when fitting the model.
             case 'fit' | 'validate' | None:
-                train_base = datasets.load_dataset(self.__hf_repo_id, split='train')
+                train_base = datasets.load_dataset(self.__hf_repo_id, split='train', cache_dir=DP.HF_CACHE_DIR)
                 self.train_data = MultiModalDataset(
                     subset=train_base,
                     tokenizer=self.tokenizer,
                     image_transformations=train_transform,
                     max_seq_length=self.max_seq_length,
                 )
-                val_base = datasets.load_dataset(self.__hf_repo_id, split='validation')
+                val_base = datasets.load_dataset(self.__hf_repo_id, split='validation', cache_dir=DP.HF_CACHE_DIR)
                 self.val_data = MultiModalDataset(
                     subset=val_base,
                     tokenizer=self.tokenizer,
@@ -138,7 +139,7 @@ class MultiModalDataLoader(L.LightningDataModule):
                     max_seq_length=self.max_seq_length,
                 )
             case 'test':
-                test_base = datasets.load_dataset(self.__hf_repo_id, split='test')
+                test_base = datasets.load_dataset(self.__hf_repo_id, split='test', cache_dir=DP.HF_CACHE_DIR)
                 self.test_data = MultiModalDataset(
                     subset=test_base,
                     tokenizer=self.tokenizer,

@@ -6,7 +6,7 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from transformers import AutoTokenizer
 
 from src.config.constants import DefaultTrainerArgs as dargs
-from src.config.env_loader import HF_CONFIG
+from src.config.env_loader import DefaultPaths as DP, HFConfig
 from src.data_processor.multi_modal_dataloader import MultiModalDataLoader
 from src.model_builder.multi_modal_classifier import MultiModalClassifier
 from src.utils.custom_mlflow_logger import CustomMLFlowLogger
@@ -19,7 +19,7 @@ LR = dargs.LR
 USE_GPU = dargs.USE_GPU
 RUN_VERSION = 2
 LOAD_MODEL = False
-PATH_MODEL_DIR = Path(f'models/checkpoints/multimodal/run_{RUN_VERSION}')
+PATH_MODEL_DIR = DP.MODEL_CHECKPOINT_DIR / Path(f'run_{RUN_VERSION}')
 # PATH_MODEL = Path(f'models/checkpoints/multimodal/run_{RUN_VERSION - 1}/last.ckpt')
 
 MLFLOW_EXP = 'MultiModal Document Classification'
@@ -45,7 +45,7 @@ def main() -> None:
 
     mlflow_logger = CustomMLFlowLogger(
         experiment_name=MLFLOW_EXP,
-        tracking_uri="file:./mlruns",
+        tracking_uri=f'file:{DP.MLFLOW_DIR.as_posix()}',
         synchronous=False,
         run_name=MLFLOW_RUN_NAME,
     )
@@ -72,7 +72,7 @@ def main() -> None:
         learning_rate=LR
     )
     data_module = MultiModalDataLoader(
-        hf_repo_id=HF_CONFIG.HF_REPO_ID,
+        hf_repo_id=HFConfig.HF_REPO_ID,
         batch_size=BATCH_SIZE,
         image_size=multi_modal_classifier.vision_fe.input_size,
         max_seq_length=multi_modal_classifier.language_fe.max_seq_len,
