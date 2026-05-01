@@ -5,14 +5,15 @@ from transformers import BatchEncoding
 from src.model_builder.multi_modal_classifier import MultiModalClassifier
 from src.config.constants import ModelName
 
+
 @pytest.fixture
 def vision_fe_params() -> tuple[str, int, bool]:
     return (ModelName.MOBILE_NET_V2, 1024, False)
 
 
 @pytest.fixture
-def language_fe_params() -> tuple[str, int, bool]:
-    return (ModelName.DISTILBERT_BASE, 896, False)
+def language_fe_params() -> tuple[str, int, bool, int]:
+    return (ModelName.DISTILBERT_BASE, 896, False, 256)
 
 
 @pytest.fixture
@@ -33,7 +34,7 @@ def multi_modal_classifier(
     num_classes: int
 ) -> MultiModalClassifier:
     vmn, vpd, vbt = vision_fe_params
-    lmn, lpd, lbt = language_fe_params
+    lmn, lpd, lbt, lmsl = language_fe_params
     return MultiModalClassifier(
         vision_model_name=vmn,
         vision_projection_dimension=vpd,
@@ -41,6 +42,7 @@ def multi_modal_classifier(
         language_model_name=lmn,
         language_projection_dimension=lpd,
         language_backbone_trainable=lbt,
+        max_seq_len=lmsl,
         num_classes=num_classes,
         learning_rate=learning_rate
     )
@@ -62,7 +64,7 @@ def batch_data(
     images = torch.randn(batch_size, 3, h, w)
     tokens = BatchEncoding(
         {
-            'input_ids': torch.randint(0, 1000, (batch_size, max_seq_len)),
+            'input_ids': torch.randint(0, 100, (batch_size, max_seq_len)),
             'attention_mask': torch.ones(batch_size, max_seq_len) 
         }
     )
@@ -113,7 +115,7 @@ def test_parameter_trainability(
     multi_modal_classifier: MultiModalClassifier
 ) -> None:
     _, _, vbt = vision_fe_params
-    _, _, lbt = language_fe_params
+    _, _, lbt, _ = language_fe_params
 
     for params in multi_modal_classifier.vision_fe.backbone.parameters():
         assert params.requires_grad is vbt

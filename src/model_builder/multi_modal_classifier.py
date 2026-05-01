@@ -20,6 +20,7 @@ class MultiModalClassifier(L.LightningModule):
         language_model_name: str,
         language_projection_dimension: int,
         language_backbone_trainable: bool,
+        max_seq_len: int,
         num_classes: int,
         learning_rate: float
     ) -> None:
@@ -38,6 +39,8 @@ class MultiModalClassifier(L.LightningModule):
         :type language_projection_dimension: int
         :param language_backbone_trainable: Whether to update weights of the language backbone.
         :type language_backbone_trainable: bool
+        :param max_seq_len: Maximum number of tokens for a sequence.
+        :type max_seq_len: int
         :param num_classes: Number of target classification categories.
         :type num_classes: int
         :param learning_rate: Learning rate for the optimizer.
@@ -71,7 +74,8 @@ class MultiModalClassifier(L.LightningModule):
         self.language_fe: LanguageFeatureExtractor = LanguageFeatureExtractor(
             backbone_model_name=language_model_name,
             projection_dimension=language_projection_dimension,
-            backbone_trainable=language_backbone_trainable
+            backbone_trainable=language_backbone_trainable,
+            max_seq_len=max_seq_len
         )
 
         self.classification_head = ClassificationHead(
@@ -119,7 +123,7 @@ class MultiModalClassifier(L.LightningModule):
 
         loss = F.cross_entropy(logits, labels)
         self.train_metrics.update(logits, labels)
-        self.log("train_loss", loss, on_epoch=True, on_step=False)
+        self.log("train_loss", loss, on_epoch=True, on_step=False, prog_bar=True)
         return loss
     
     def on_train_epoch_end(self) -> None:
@@ -162,7 +166,7 @@ class MultiModalClassifier(L.LightningModule):
         loss = F.cross_entropy(logits, labels)
         self.val_metrics.update(logits, labels)
         self.val_cm.update(logits, labels)
-        self.log("val_loss", loss, on_epoch=True, on_step=False)
+        self.log("val_loss", loss, on_epoch=True, on_step=False, prog_bar=True)
     
     def on_validation_epoch_end(self) -> None:
         """
@@ -216,7 +220,7 @@ class MultiModalClassifier(L.LightningModule):
         loss = F.cross_entropy(logits, labels)
         self.test_metrics.update(logits, labels)
         self.test_cm.update(logits, labels)
-        self.log("test_loss", loss, on_epoch=True, on_step=False)
+        self.log("test_loss", loss, on_epoch=True, on_step=False, prog_bar=True)
     
     def on_test_epoch_end(self) -> None:
         """
@@ -225,25 +229,21 @@ class MultiModalClassifier(L.LightningModule):
         :return: None
         :rtype: None
         """
-        # Log scalar metrics (Acc, F1)
-        output = self.test_metrics.compute()
+        output = self.test_metrics.compute() # output is a dict of tensors
 
-        # Log Confusion Matrix as an Image to MLflow
-        fig, _ = self.test_cm.plot()
+        # 1. Let Lightning handle the scalars (this puts them in the table & progress bar)
+        self.log_dict(output, prog_bar=True)
+
+        # 2. Manually handle the Image (since Lightning's self.log doesn't do figures)
         if self.logger:
-            self.logger.log_metrics(
-                output, step=self.current_epoch
-            )
+            fig, _ = self.test_cm.plot()
             self.logger.experiment.log_figure(
                 run_id=self.logger.run_id,
                 figure=fig,
-                artifact_file='test_cm/test_cm.png'
+                artifact_file=f'test_cm/test_cm_epoch_{self.current_epoch}.png'
             )
-        self.log_dict(
-            output, on_epoch=True, on_step=False,
-            logger=False, prog_bar=True
-        )
-        plt.close(fig)
+            plt.close(fig)
+
         self.test_cm.reset()
         self.test_metrics.reset()
 

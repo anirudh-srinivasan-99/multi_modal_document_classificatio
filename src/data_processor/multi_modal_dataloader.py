@@ -29,8 +29,7 @@ class MultiModalDataLoader(L.LightningDataModule):
         :param image_size: Size of the image (H, W). Dependent on the input layer of
             the Vision Backbone being used.
         :type image_size: tuple[int, int]
-        :param max_seq_length: Maximum Sequence Length to be used before sending to the model.
-            Depends on the Language Backbone being used.
+        :param max_seq_length: Maximum number of tokens for a sequence.
         :type max_seq_length: int
         :param tokenizer: Tokenizer used to tokenize the text. Depends on the Language Backbone
             being used.
@@ -47,8 +46,8 @@ class MultiModalDataLoader(L.LightningDataModule):
         self.__hf_repo_id: str = hf_repo_id
         self.batch_size: int = batch_size
         self.image_size: tuple[int, int] = image_size
-        self.max_seq_length: int = max_seq_length
         self.tokenizer: AutoTokenizer = tokenizer
+        self.max_seq_length: int = max_seq_length
         self.dataset_mean: tuple[float, float, float] = dataset_mean
         self.dataset_std: tuple[float, float, float] = dataset_std
 

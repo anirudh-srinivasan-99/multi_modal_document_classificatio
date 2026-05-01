@@ -33,6 +33,7 @@ VISION_BACKBONE_TRAINABLE = dargs.VISION_BACKBONE_TRAINABLE
 LANGUAGE_MODEL_NAME = dargs.LANGUAGE_MODEL_NAME
 LANGUAGE_PROJECTION_DIMENSION = dargs.LANGUAGE_PROJECTION_DIMENSION
 LANGUAGE_BACKBONE_TRAINABLE = dargs.LANGUAGE_BACKBONE_TRAINABLE
+MAX_SEQ_LENGTH = dargs.MAX_SEQ_LENGTH
 
 NUM_CLASSES = dargs.NUM_CLASSES
 
@@ -42,6 +43,7 @@ DATASET_STD = dargs.DATASET_STD
 
 def main() -> None:
     PATH_MODEL_DIR.mkdir(parents=True, exist_ok=True)
+    tokenizer = AutoTokenizer.from_pretrained(LANGUAGE_MODEL_NAME)
 
     mlflow_logger = CustomMLFlowLogger(
         experiment_name=MLFLOW_EXP,
@@ -68,6 +70,7 @@ def main() -> None:
         language_model_name=LANGUAGE_MODEL_NAME,
         language_projection_dimension=LANGUAGE_PROJECTION_DIMENSION,
         language_backbone_trainable=LANGUAGE_BACKBONE_TRAINABLE,
+        max_seq_len=min(MAX_SEQ_LENGTH, tokenizer.model_max_length),
         num_classes=NUM_CLASSES,
         learning_rate=LR
     )
@@ -91,7 +94,7 @@ def main() -> None:
     # )
     trainer = L.Trainer(
         overfit_batches=1,  # Use only 1 batch to see if loss goes to ~0
-        max_epochs=50,     # Usually needs more epochs to fully overfit
+        max_epochs=1,     # Usually needs more epochs to fully overfit
         accelerator="auto",
         logger=False        # Often disabled during quick sanity tests
     )
@@ -99,7 +102,8 @@ def main() -> None:
         multi_modal_classifier, datamodule=data_module,
     )
     # trainer.test(
-    #     nn_model, datamodule=data_module,
+    #     multi_modal_classifier, datamodule=data_module,
+    #     ckpt_path="best"
     # )
 
 

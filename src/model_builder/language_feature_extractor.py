@@ -10,7 +10,8 @@ class LanguageFeatureExtractor(nn.Module):
         self,
         backbone_model_name: str,
         projection_dimension: int,
-        backbone_trainable: bool
+        backbone_trainable: bool,
+        max_seq_len: int
     ) -> None:
         """
         Initializes the Language Feature Extractor with different backbones.
@@ -23,6 +24,8 @@ class LanguageFeatureExtractor(nn.Module):
         :type projection_dimension: int
         :param backbone_trainable: Whether the backbone parameters should be updated during training.
         :type backbone_trainable: bool
+        :param max_seq_len: Maximum number of tokens for a sequence.
+        :type max_seq_len: int
 
         :return: None
         :rtype: None
@@ -31,7 +34,7 @@ class LanguageFeatureExtractor(nn.Module):
         self.backbone: nn.Module = AutoModel.from_pretrained(backbone_model_name)
         config = AutoConfig.from_pretrained(backbone_model_name)
 
-        self.max_seq_len = config.max_position_embeddings
+        self.max_seq_len: int = max_seq_len
 
         # There is a slight inconsistency with models where some store the output_dimensions
         #   in `hidden_size` and others in `dim`. Thus we check both.
@@ -40,7 +43,7 @@ class LanguageFeatureExtractor(nn.Module):
         for param in self.backbone.parameters():
             param.requires_grad = backbone_trainable
 
-        self.projection_head = ProjectionHead(
+        self.projection_head: ProjectionHead = ProjectionHead(
             input_dimensions=backbone_output_dimensions,
             output_dimensions=projection_dimension
         )

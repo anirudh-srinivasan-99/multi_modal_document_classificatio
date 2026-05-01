@@ -61,7 +61,8 @@ def language_fe(
     return LanguageFeatureExtractor(
         backbone_model_name=model_name,
         projection_dimension=projection_dimension,
-        backbone_trainable=is_trainable
+        backbone_trainable=is_trainable,
+        max_seq_len=512
     )
 
 
@@ -93,7 +94,7 @@ def input_tokens(
     max_seq_len = language_fe.max_seq_len
     return BatchEncoding(
         {
-            'input_ids': torch.randint(0, 1000, (batch_size, max_seq_len)),
+            'input_ids': torch.randint(0, 100, (batch_size, max_seq_len)),
             'attention_mask': torch.ones(batch_size, max_seq_len) 
         }
     )
