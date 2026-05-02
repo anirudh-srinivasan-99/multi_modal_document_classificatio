@@ -11,7 +11,7 @@ folders=(
     "data/raw"
     "data/processed"
     "models/pretrained"
-    "models/checkpoint"
+    "models/checkpoints"
     "mlruns"
     "logs"
     "dev_scripts"
@@ -34,5 +34,9 @@ else
     echo "Install it with: pip install uv ..."
     echo "Oce installed, run `uv sync` to install required dependencies."
 fi
+
+# 3. Copy .env.template file as .env file
+cp .env.template .env
+
 
 echo "Setup complete. Your data/ and models/ folders are ready (and ignored by git)."
