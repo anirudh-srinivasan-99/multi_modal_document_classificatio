@@ -4,20 +4,22 @@ import lightning as L
 from torch.utils.data import DataLoader, Dataset
 from transformers import AutoTokenizer
 
-from src.data_processor.multi_modal_dataset import MultiModalDataset
 from src.config.env_loader import DefaultPaths as DP
+from src.data_processor.multi_modal_dataset import MultiModalDataset
 
 
 class MultiModalDataLoader(L.LightningDataModule):
     def __init__(
         self,
-        hf_repo_id: str, 
+        hf_repo_id: str,
         batch_size: int,
         image_size: tuple[int, int],
         max_seq_length: int,
         tokenizer: AutoTokenizer,
         dataset_mean: tuple[float, float, float],
-        dataset_std: tuple[float, float, float]
+        dataset_std: tuple[float, float, float],
+        hf_token: str | None = None,
+        hf_force_redownload: bool = False
     ) -> None:
         """
         Constructor of the Dataloader.
@@ -38,6 +40,12 @@ class MultiModalDataLoader(L.LightningDataModule):
         :type dataset_mean: tuple[float, float, float]
         :param dataset_std: Standard deviation RGB values (0-1 scale) across all training images.
         :type dataset_std: tuple[float, float, float]
+        :param hf_token: Passes HuggingFace Token for the API call to improve
+            download speeds and download from private repo.
+        :type hf_token: str | None
+        :param hf_force_redownload: A boolean Flag to download the dataset
+            even if cache is already present.
+        :type hf_force_redownload: bool
 
         :return: None
         :rtype: None
@@ -50,6 +58,13 @@ class MultiModalDataLoader(L.LightningDataModule):
         self.max_seq_length: int = max_seq_length
         self.dataset_mean: tuple[float, float, float] = dataset_mean
         self.dataset_std: tuple[float, float, float] = dataset_std
+
+        self.__hf_token: str | None = hf_token if hf_token else None
+        self.__hf_download_mode: str = (
+            datasets.DownloadMode.FORCE_REDOWNLOAD
+            if hf_force_redownload
+            else datasets.DownloadMode.REUSE_DATASET_IF_EXISTS
+        )
 
         # Train, Validation and Test Data.
         self.train_data: Dataset | None= None
@@ -70,7 +85,11 @@ class MultiModalDataLoader(L.LightningDataModule):
         """
         # Load just the metadata/features without downloading the actual images.
         # This is very fast.
-        datasets.load_dataset(self.__hf_repo_id, cache_dir=DP.HF_CACHE_DIR)
+        datasets.load_dataset(
+            self.__hf_repo_id, cache_dir=DP.HF_CACHE_DIR,
+            token=self.__hf_token,
+            download_mode=self.__hf_download_mode
+        )
 
     def setup(self, stage: str) -> None:
         """
@@ -79,7 +98,6 @@ class MultiModalDataLoader(L.LightningDataModule):
         :param stage: Stage with which the setup is called. Usually has value of
             fit, valid, test and None.
         :type stage: str
-
         :return: None
         :rtype: None
         """

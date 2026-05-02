@@ -36,7 +36,9 @@ def datamodule(tokenizer: PreTrainedTokenizer) -> MultiModalDataLoader:
         max_seq_length=128,
         tokenizer=tokenizer,
         dataset_mean=(0.485, 0.456, 0.406),
-        dataset_std=(0.229, 0.224, 0.225)
+        dataset_std=(0.229, 0.224, 0.225),
+        hf_token=HFConfig.HF_TOKEN,
+        hf_force_redownload=HFConfig.HF_FORCE_DOWNLOAD
     )
 
 
