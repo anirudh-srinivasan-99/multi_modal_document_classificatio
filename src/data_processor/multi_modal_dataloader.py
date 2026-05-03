@@ -19,7 +19,8 @@ class MultiModalDataLoader(L.LightningDataModule):
         dataset_mean: tuple[float, float, float],
         dataset_std: tuple[float, float, float],
         hf_token: str | None = None,
-        hf_force_redownload: bool = False
+        hf_force_redownload: bool = False,
+        dl_num_workers: int = 0
     ) -> None:
         """
         Constructor of the Dataloader.
@@ -46,6 +47,8 @@ class MultiModalDataLoader(L.LightningDataModule):
         :param hf_force_redownload: A boolean Flag to download the dataset
             even if cache is already present.
         :type hf_force_redownload: bool
+        :param dl_num_workers: Number of workers to fetch and load data.
+        :type dl_num_workers: int
 
         :return: None
         :rtype: None
@@ -65,6 +68,7 @@ class MultiModalDataLoader(L.LightningDataModule):
             if hf_force_redownload
             else datasets.DownloadMode.REUSE_DATASET_IF_EXISTS
         )
+        self.__dl_workers: int = dl_num_workers
 
         # Train, Validation and Test Data.
         self.train_data: Dataset | None= None
@@ -141,14 +145,20 @@ class MultiModalDataLoader(L.LightningDataModule):
         match stage:
             # Lightning requires both Train and Val data when fitting the model.
             case 'fit' | 'validate' | None:
-                train_base = datasets.load_dataset(self.__hf_repo_id, split='train', cache_dir=DP.HF_CACHE_DIR)
+                train_base = datasets.load_dataset(
+                    self.__hf_repo_id, split='train',
+                    cache_dir=DP.HF_CACHE_DIR, num_proc=self.__dl_workers
+                )
                 self.train_data = MultiModalDataset(
                     subset=train_base,
                     tokenizer=self.tokenizer,
                     image_transformations=train_transform,
                     max_seq_length=self.max_seq_length,
                 )
-                val_base = datasets.load_dataset(self.__hf_repo_id, split='validation', cache_dir=DP.HF_CACHE_DIR)
+                val_base = datasets.load_dataset(
+                    self.__hf_repo_id, split='validation',
+                    cache_dir=DP.HF_CACHE_DIR, num_proc=self.__dl_workers
+                )
                 self.val_data = MultiModalDataset(
                     subset=val_base,
                     tokenizer=self.tokenizer,
@@ -156,7 +166,11 @@ class MultiModalDataLoader(L.LightningDataModule):
                     max_seq_length=self.max_seq_length,
                 )
             case 'test':
-                test_base = datasets.load_dataset(self.__hf_repo_id, split='test', cache_dir=DP.HF_CACHE_DIR)
+                test_base = datasets.load_dataset(
+                    self.__hf_repo_id, split='test',
+                    cache_dir=DP.HF_CACHE_DIR, num_proc=self.__dl_workers
+                    
+                )
                 self.test_data = MultiModalDataset(
                     subset=test_base,
                     tokenizer=self.tokenizer,
@@ -181,6 +195,8 @@ class MultiModalDataLoader(L.LightningDataModule):
             self.train_data,
             self.batch_size,
             shuffle=True,
+            num_workers=self.__dl_workers,
+            persistent_workers=True,
             pin_memory=True
         )
 
@@ -199,7 +215,9 @@ class MultiModalDataLoader(L.LightningDataModule):
         return DataLoader(
             self.val_data,
             self.batch_size,
-            pin_memory=True
+            num_workers=self.__dl_workers,
+            pin_memory=True,
+            persistent_workers=True,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -217,5 +235,7 @@ class MultiModalDataLoader(L.LightningDataModule):
         return DataLoader(
             self.test_data,
             self.batch_size,
-            pin_memory=True
+            num_workers=self.__dl_workers,
+            pin_memory=True,
+            persistent_workers=True,
         )

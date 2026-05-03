@@ -12,6 +12,7 @@ class HFConfig:
     HF_TOKEN: str = os.getenv('HF_TOKEN')
     HF_REPO_ID: str = os.getenv('HF_REPO_ID')
     HF_FORCE_DOWNLOAD: bool = os.getenv('HF_FORCE_DOWNLOAD', '').lower() == 'true'
+    DL_NUM_WORKERS: int = min(int(os.getenv('DL_NUM_WORKERS')), os.cpu_count())
 
 
 class DefaultPaths:
